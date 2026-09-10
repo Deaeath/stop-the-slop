@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Stop The Slop options</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { max-width: 620px; margin: 0 auto; padding: 28px 20px 60px;
+           background: #131313; color: #f1f1f1;
+           font: 14px/1.55 "Roboto", system-ui, sans-serif; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    p.lede { color: #999; margin: 0 0 24px; }
+    fieldset { border: 1px solid #2e2e2e; border-radius: 10px; padding: 16px; margin: 0 0 18px; }
+    legend { padding: 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #999; }
+    label { display: block; margin: 14px 0; }
+    label:first-of-type { margin-top: 0; }
+    .lbl { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .lbl b { font-weight: 600; }
+    .lbl output { color: #ffd489; font-variant-numeric: tabular-nums; font-size: 13px; }
+    .hint { display: block; color: #888; font-size: 12px; margin-top: 2px; }
+    input[type=range] { width: 100%; margin-top: 8px; accent-color: #d99a1f; }
+    input[type=checkbox] { margin-right: 8px; accent-color: #d99a1f; }
+    textarea { width: 100%; min-height: 110px; margin-top: 8px; padding: 8px 10px;
+               border: 1px solid #333; border-radius: 8px; background: #0d0d0d; color: #eee;
+               font: 12px/1.5 ui-monospace, Consolas, monospace; resize: vertical; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    button { padding: 8px 14px; border: 1px solid #444; border-radius: 999px;
+             background: transparent; color: #eee; font: 600 12px sans-serif; cursor: pointer; }
+    button:hover { background: #262626; }
+    button.primary { border-color: #2f9d5f; color: #86e0a8; }
+    #saved { color: #86e0a8; font-size: 12px; opacity: 0; transition: opacity .2s; }
+    #saved.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <h1>Stop The Slop</h1>
+  <p class="lede">Two signals: a comment section that's dead relative to the view count, and commenters
+     saying out loud that it's machine-made. Tune how hard each one bites.</p>
+
+  <fieldset>
+    <legend>Thresholds</legend>
+    <label>
+      <span class="lbl"><b>Call it slop at</b><output id="o-slopAt"></output></span>
+      <input type="range" id="slopAt" min="30" max="95" step="1">
+      <span class="hint">Score at or above this gets the red SLOP badge.</span>
+    </label>
+    <label>
+      <span class="lbl"><b>Call it suspect at</b><output id="o-suspectAt"></output></span>
+      <input type="range" id="suspectAt" min="10" max="80" step="1">
+    </label>
+    <label>
+      <span class="lbl"><b>Ignore videos under</b><output id="o-minViews"></output></span>
+      <input type="range" id="minViews" min="0" max="50000" step="500">
+      <span class="hint">Below this view count the comment ratio is just noise.</span>
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Comment ratio</legend>
+    <p class="hint" style="margin:0 0 14px">Judged against what a real channel <i>of the same size</i>
+       gets, not one flat number &mdash; big audiences comment proportionally less, so a flat
+       threshold flags everyone. Measured defaults: ~1.5% at 3k views, ~0.15% at 5M.</p>
+    <label>
+      <span class="lbl"><b>Normal shortfall (0 points)</b><output id="o-deficitClean"></output></span>
+      <input type="range" id="deficitClean" min="1" max="10" step="0.5">
+      <span class="hint">How far below expectation is still unremarkable.</span>
+    </label>
+    <label>
+      <span class="lbl"><b>Flatlined shortfall (100 points)</b><output id="o-deficitSlop"></output></span>
+      <input type="range" id="deficitSlop" min="5" max="50" step="1">
+    </label>
+    <label>
+      <span class="lbl"><b>Expected ratio at 3k views</b><output id="o-baseRatio"></output></span>
+      <input type="range" id="baseRatio" min="20" max="400" step="5">
+      <span class="hint">Raise this if the extension is too eager on small channels.</span>
+    </label>
+    <label>
+      <span class="lbl"><b>Comments turned off scores</b><output id="o-disabledScore"></output></span>
+      <input type="range" id="disabledScore" min="0" max="100" step="5">
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>What commenters say</legend>
+    <label>
+      <span class="lbl"><b>Comments read per video</b><output id="o-commentSample"></output></span>
+      <input type="range" id="commentSample" min="10" max="80" step="5">
+      <span class="hint">More comments = better signal, slower scan.</span>
+    </label>
+    <label>
+      <span class="lbl"><b>Discount when the video is about AI</b><output id="o-topicGuard"></output></span>
+      <input type="range" id="topicGuard" min="0" max="100" step="5">
+      <span class="hint">AI news channels get "AI" in every comment. Lower = discount harder.</span>
+    </label>
+    <label>
+      <b>Extra accusation patterns</b>
+      <span class="hint">One regex per line, case-insensitive. Matching a comment counts as a direct accusation.</span>
+      <textarea id="extraStrong" spellcheck="false" placeholder="\bveo ?3\b&#10;ai upscal"></textarea>
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Behaviour</legend>
+    <label class="row"><input type="checkbox" id="autoScan"><span><b>Score videos automatically</b><span class="hint">Off = only score when you click Scan.</span></span></label>
+    <label class="row"><input type="checkbox" id="scanFeed"><span><b>Scan every channel that scrolls into view</b><span class="hint">Scores one video per new channel as you browse, so the feed lights up on its own.</span></span></label>
+    <label class="row"><input type="checkbox" id="highlightLinks"><span><b>Highlight channel links everywhere</b><span class="hint">Bylines, sidebar, descriptions, comment authors.</span></span></label>
+    <label class="row"><input type="checkbox" id="scanShorts"><span><b>Include Shorts</b><span class="hint">Off by default - Shorts get huge views with few comments, so the ratio flags almost all of them.</span></span></label>
+    <label>
+      <span class="lbl"><b>Scan budget per page load</b><output id="o-maxFeedScans"></output></span>
+      <input type="range" id="maxFeedScans" min="10" max="200" step="10">
+      <span class="hint">Caps how many channels an infinite scroll can queue up.</span>
+    </label>
+    <label>
+      <span class="lbl"><b>Gap between scans</b><output id="o-scanDelayMs"></output></span>
+      <input type="range" id="scanDelayMs" min="150" max="2000" step="50">
+    </label>
+    <label class="row"><input type="checkbox" id="dimThumbnails"><span><b>Fade out thumbnails from slop channels</b></span></label>
+    <label>
+      <span class="lbl"><b>Videos per channel scan</b><output id="o-scanDepth"></output></span>
+      <input type="range" id="scanDepth" min="2" max="15" step="1">
+    </label>
+  </fieldset>
+
+  <div class="row">
+    <button class="primary" id="save">Save</button>
+    <button id="reset">Reset to defaults</button>
+    <span id="saved">Saved</span>
+  </div>
+
+  <script src="../src/patterns.js"></script>
+  <script src="../src/scoring.js"></script>
+  <script src="../src/store.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

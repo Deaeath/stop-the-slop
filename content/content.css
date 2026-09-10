@@ -1,0 +1,120 @@
+/* Stop The Slop - injected UI. Sits on top of YouTube's dark or light theme. */
+
+.sts-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: 700 11px/1.2 "Roboto", system-ui, sans-serif;
+  letter-spacing: .06em;
+  cursor: pointer;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.sts-badge.sts-slop    { background: #43121a; border-color: #b3202f; color: #ff9aa5; }
+.sts-badge.sts-suspect { background: #43330f; border-color: #b57f18; color: #ffd489; }
+.sts-badge.sts-ok      { background: #12331f; border-color: #1f7a45; color: #86e0a8; }
+html:not([dark]) .sts-badge.sts-slop    { background: #ffe9ec; border-color: #d33a4a; color: #90101f; }
+html:not([dark]) .sts-badge.sts-suspect { background: #fff3dd; border-color: #cf9a25; color: #7a5300; }
+html:not([dark]) .sts-badge.sts-ok      { background: #e6f7ec; border-color: #2f9d5f; color: #14602f; }
+
+.sts-thumb-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 30;
+  padding: 3px 7px;
+  border-radius: 4px;
+  font: 700 10px/1.2 "Roboto", system-ui, sans-serif;
+  letter-spacing: .05em;
+  pointer-events: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,.5);
+}
+.sts-thumb-badge.sts-slop    { background: #c22335; color: #fff; }
+.sts-thumb-badge.sts-suspect { background: #d99a1f; color: #221800; }
+
+.sts-dim { opacity: .35; transition: opacity .15s; }
+.sts-dim:hover { opacity: 1; }
+
+.sts-panel {
+  position: absolute;
+  z-index: 9999;
+  width: 360px;
+  max-width: calc(100vw - 16px);
+  padding: 14px;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  background: #212121;
+  color: #f1f1f1;
+  box-shadow: 0 8px 28px rgba(0,0,0,.55);
+  font: 400 13px/1.45 "Roboto", system-ui, sans-serif;
+}
+html:not([dark]) .sts-panel {
+  background: #fff;
+  color: #0f0f0f;
+  border-color: #dadada;
+  box-shadow: 0 8px 28px rgba(0,0,0,.18);
+}
+
+.sts-panel-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.sts-panel-head .sts-badge { margin-left: 0; cursor: default; }
+.sts-panel-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sts-bars { display: grid; gap: 10px; margin-bottom: 12px; }
+.sts-bar-label { display: flex; justify-content: space-between; font-size: 11px; opacity: .8; margin-bottom: 4px; }
+.sts-bar-track { height: 6px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+html:not([dark]) .sts-bar-track { background: rgba(0,0,0,.1); }
+.sts-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #2f9d5f 0%, #d99a1f 55%, #c22335 100%); background-size: 300px 100%; }
+
+.sts-notes { margin: 0 0 12px; padding-left: 18px; font-size: 12px; opacity: .85; }
+.sts-notes li { margin: 3px 0; }
+
+.sts-evidence { margin-bottom: 12px; }
+.sts-evidence-h { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin-bottom: 6px; }
+.sts-quote {
+  margin: 4px 0;
+  padding: 6px 8px;
+  border-left: 2px solid #c22335;
+  background: rgba(255,255,255,.05);
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+html:not([dark]) .sts-quote { background: rgba(0,0,0,.04); }
+
+.sts-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.sts-act {
+  flex: 1 1 auto;
+  padding: 7px 10px;
+  border: 1px solid #4a4a4a;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: 600 12px "Roboto", system-ui, sans-serif;
+  cursor: pointer;
+}
+.sts-act:hover:not(:disabled) { background: rgba(255,255,255,.08); }
+html:not([dark]) .sts-act { border-color: #ccc; }
+html:not([dark]) .sts-act:hover:not(:disabled) { background: rgba(0,0,0,.05); }
+.sts-act:disabled { opacity: .6; cursor: default; }
+
+#sts-channel-badge { cursor: default; }
+
+/* --- Shinigami Eyes style link highlighting ------------------------------- */
+
+a.sts-link-slop,
+a.sts-link-suspect {
+  border-radius: 3px !important;
+  padding: 0 3px !important;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  text-decoration: none !important;
+}
+a.sts-link-slop { background-color: #c22335 !important; color: #ffffff !important; }
+a.sts-link-suspect { background-color: #e0a52a !important; color: #201700 !important; }
+a.sts-link-slop *, a.sts-link-suspect * { color: inherit !important; }
+a.sts-link-slop:hover { background-color: #d92c40 !important; }
+a.sts-link-suspect:hover { background-color: #f0b63a !important; }

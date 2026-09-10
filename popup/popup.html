@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>Stop The Slop</h1>
+    <a id="opts" href="#" title="Options">⚙</a>
+  </header>
+
+  <section id="current" class="card hidden"></section>
+  <section id="empty" class="muted">Open a YouTube video or channel to score it.</section>
+  <div id="scanstat" class="muted scanstat"></div>
+
+  <section class="list-head">
+    <span id="count">Flagged channels</span>
+    <input id="filter" type="search" placeholder="filter…">
+  </section>
+  <ul id="list"></ul>
+
+  <footer>
+    <button id="export">Export JSON</button>
+    <button id="clear" class="danger">Clear all data</button>
+  </footer>
+
+  <script src="../src/patterns.js"></script>
+  <script src="../src/scoring.js"></script>
+  <script src="../src/store.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

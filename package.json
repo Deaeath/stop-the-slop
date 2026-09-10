@@ -1,0 +1,12 @@
+{
+  "name": "stop-the-slop",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Chrome extension that flags AI-slop YouTube channels in the feed.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node --check background.js && node --check build.mjs && node --check src/patterns.js && node --check src/scoring.js && node --check src/store.js && node --check src/innertube.js && node --check content/content.js && node --check popup/popup.js && node --check options/options.js"
+  },
+  "license": "MIT"
+}
