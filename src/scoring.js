@@ -28,6 +28,7 @@ globalThis.STS = globalThis.STS || {};
     highlightLinks: true,// paint channel links wherever they appear
     dimThumbnails: true,
     autoScan: true,
+    autoUpdateCheck: true,  // poll GitHub releases every 6h
     extraStrong: []
   };
 

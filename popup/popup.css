@@ -10,6 +10,11 @@ h1 { margin: 0; font-size: 14px; letter-spacing: .04em; }
 header a { color: #aaa; text-decoration: none; font-size: 16px; }
 header a:hover { color: #fff; }
 .muted { color: #999; font-size: 12px; }
+.updbar { display: block; margin: -4px 0 10px; padding: 7px 10px; border-radius: 8px;
+          background: #16305c; border: 1px solid #2f6fd9; color: #cfe0ff;
+          font-size: 12px; font-weight: 600; text-decoration: none; }
+.updbar:hover { background: #1c3d73; }
+.updbar .sub { display: block; font-weight: 400; color: #9ab6e8; font-size: 11px; margin-top: 2px; }
 .hidden { display: none !important; }
 
 .card { border: 1px solid #333; border-radius: 10px; padding: 10px; margin-bottom: 12px; background: #212121; }

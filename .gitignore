@@ -2,3 +2,6 @@ dist/
 node_modules/
 *.zip
 .DS_Store
+
+# Needs a token with `workflow` scope to push; add with: git add -f .github/workflows/release.yml
+.github/

@@ -1,14 +1,25 @@
 {
   "manifest_version": 3,
   "name": "Stop The Slop",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Flags AI-slop YouTube channels as you browse: dead comment sections plus commenters calling it AI, highlighted right in the feed.",
-  "permissions": ["storage"],
-  "host_permissions": ["https://www.youtube.com/*"],
-  "background": { "service_worker": "background.js" },
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://api.github.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*"],
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
       "js": [
         "src/patterns.js",
         "src/scoring.js",
@@ -16,7 +27,9 @@
         "src/innertube.js",
         "content/content.js"
       ],
-      "css": ["content/content.css"],
+      "css": [
+        "content/content.css"
+      ],
       "run_at": "document_idle"
     }
   ],

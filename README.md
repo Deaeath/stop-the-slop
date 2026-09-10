@@ -121,6 +121,28 @@ The detector is a heuristic. Where it's wrong:
 Feed verdicts come from **one** video, so they're provisional. `Scan channel`
 samples six uploads and averages, which is what you want before trusting a call.
 
+## Keeping it up to date
+
+The extension checks GitHub releases every 6 hours and tells you when a new
+version is out — a badge on the toolbar icon, a banner in the popup, and a
+desktop notification. Turn it off under Options.
+
+It **notifies** rather than silently replacing itself, because Chromium cannot
+hot-swap an extension loaded unpacked. To actually pull the new build:
+
+```powershell
+# install or update to the latest release
+powershell -ExecutionPolicy Bypass -File tools/update.ps1
+
+# ...and check for updates automatically every day
+powershell -ExecutionPolicy Bypass -File tools/update.ps1 -Schedule
+```
+
+It installs to `%LOCALAPPDATA%\StopTheSlop\extension` and replaces the contents
+in place, so the browser keeps pointing at the same folder. Restart the browser
+(or hit Reload on the extension) to apply. Point **Load unpacked** at that
+folder rather than anywhere under `dist/`, which the build script wipes.
+
 ## Options
 
 Gear icon in the popup. If it's flagging too much, raise **Call it slop at** or

@@ -6,7 +6,8 @@
   const SLIDERS = ['slopAt', 'suspectAt', 'minViews', 'deficitClean', 'deficitSlop',
                    'baseRatio', 'disabledScore', 'commentSample', 'topicGuard',
                    'scanDepth', 'maxFeedScans', 'scanDelayMs'];
-  const CHECKS = ['autoScan', 'dimThumbnails', 'scanFeed', 'highlightLinks', 'scanShorts'];
+  const CHECKS = ['autoScan', 'dimThumbnails', 'scanFeed', 'highlightLinks',
+                  'scanShorts', 'autoUpdateCheck'];
 
   // baseRatio is stored as a fraction but edited as "comments per 10,000 views".
   const toPer10k = (frac) => Math.round(frac * 10000);

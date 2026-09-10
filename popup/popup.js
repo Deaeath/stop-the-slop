@@ -156,6 +156,16 @@
     }
   }
 
+  async function renderUpdate() {
+    const bar = $('updbar');
+    const { update } = await new Promise((r) => chrome.storage.local.get('update', r));
+    if (!update || !update.available) { bar.classList.add('hidden'); return; }
+    bar.classList.remove('hidden');
+    bar.innerHTML = 'Update available: v' + update.latest +
+      '<span class="sub">You are on v' + update.current + '. Click to open the release.</span>';
+    bar.onclick = (e) => { e.preventDefault(); chrome.runtime.sendMessage({ type: 'sts-open-release' }); };
+  }
+
   $('filter').addEventListener('input', renderList);
   $('opts').addEventListener('click', (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });
   $('export').addEventListener('click', async () => {
@@ -176,5 +186,9 @@
     if (t && /^https:\/\/www\.youtube\.com\//.test(t.url || '')) tabId = t.id;
     await renderCurrent();
     await renderList();
+    await renderUpdate();
+    chrome.runtime.sendMessage({ type: 'sts-check-update' }, () => {
+      if (!chrome.runtime.lastError) renderUpdate();
+    });
   });
 })(globalThis.STS);
