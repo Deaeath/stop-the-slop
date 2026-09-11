@@ -326,24 +326,36 @@
     }
 
     const info = { key: key, videoId: videoId, isShort: isShort };
-    if (key && videoId) cardCache.set(card, info);
+    if (key || videoId) cardCache.set(card, info);
     return info;
   }
 
   /* Queue a card's channel for scoring. One video per channel is enough for a
      provisional verdict - "Scan channel" deepens it on demand. */
   async function enqueue(info) {
-    if (!info.key || !info.videoId) return;
-    if (pending.has(info.key) || failed.has(info.key)) return;
+    // YouTube's newer lockup cards render the channel name as plain text with no
+    // anchor, so the video id is often all we get. That's enough - the scan
+    // itself tells us which channel the video belongs to.
+    if (!info.videoId) return;
+    const tag = info.key || 'v:' + info.videoId;
+    if (pending.has(tag) || failed.has(tag)) return;
     const s = await settings();
     if (!s.scanFeed) return;
     // Shorts ratios aren't comparable to long-form, so they would flag everything.
     if (info.isShort && !s.scanShorts) return;
     if (scansThisSession >= s.maxFeedScans) return;
-    const known = await STS.store.getChannel(info.key);
-    if (known && known.n) return;      // already have a verdict for this channel
-    pending.add(info.key);
-    queue.push(info);
+
+    let knownId = info.key;
+    if (!knownId) {
+      const cached = await STS.store.getVideo(info.videoId);
+      if (cached && cached.channelId) knownId = cached.channelId;
+    }
+    if (knownId) {
+      const known = await STS.store.getChannel(knownId);
+      if (known && known.n) return;    // already have a verdict for this channel
+    }
+    pending.add(tag);
+    queue.push({ videoId: info.videoId, key: info.key, isShort: info.isShort, tag: tag });
     runWorker();
   }
 
@@ -359,9 +371,9 @@
         try {
           await scoreVideo(job.videoId, false, { isShort: job.isShort });
         } catch (e) {
-          failed.add(job.key);
+          failed.add(job.tag);
         }
-        pending.delete(job.key);
+        pending.delete(job.tag);
         scheduleDecorate();
         await sleep(s.scanDelayMs);
       }
@@ -408,7 +420,7 @@
 
   function paintCard(card, lookup, s) {
     const info = cardInfo(card);
-    const rec = lookup(info.key);
+    const rec = lookup(info.key, info.videoId);
     const verdict = rec ? STS.store.effective(rec) : 'unknown';
     const existing = card.querySelector('.sts-thumb-badge');
 
@@ -437,9 +449,26 @@
 
   /* Shinigami Eyes style: paint every link pointing at a flagged channel, wherever
      it shows up - bylines, sidebar, descriptions, comment authors. */
+  /* Plenty of things on YouTube are links to a channel without being the
+     channel's NAME - the avatar, the Videos/About tabs, subscribe chips.
+     Painting those just looks broken. */
+  function isNameLink(a) {
+    if (!a.textContent || !a.textContent.trim()) return false;
+    if (a.getAttribute('role') === 'button') return false;
+    if (/ytSpecButtonShapeNext|yt-spec-button-shape/.test(a.className || '')) return false;
+    if (a.querySelector('img, yt-img-shadow, avatar-view-model, yt-icon')) return false;
+    if (a.closest('yt-button-shape, button-view-model, ytd-button-renderer,' +
+                  'yt-chip-cloud-chip-renderer, tp-yt-paper-tab, ytd-subscribe-button-renderer')) return false;
+    return true;
+  }
+
   function paintLinks(lookup) {
     const links = document.querySelectorAll('a[href^="/@"], a[href^="/channel/"]');
     for (const a of links) {
+      if (!isNameLink(a)) {
+        a.classList.remove('sts-link-slop', 'sts-link-suspect');
+        continue;
+      }
       const rec = lookup(keyFromHref(a.getAttribute('href')));
       const verdict = rec ? STS.store.effective(rec) : 'unknown';
       const want = (verdict === 'slop' || verdict === 'suspect') ? 'sts-link-' + verdict : null;
@@ -463,12 +492,16 @@
     const s = await settings();
     const cards = observeCards();
     const map = await STS.store.channels();
-    const handles = await new Promise((res) =>
-      chrome.storage.local.get('handles', (o) => res(o.handles || {})));
+    const stored = await new Promise((res) =>
+      chrome.storage.local.get(['handles', 'videos'], (o) => res(o || {})));
+    const handles = stored.handles || {};
+    const videos = stored.videos || {};
 
-    const lookup = (key) => {
-      if (!key) return null;
-      const id = /^UC[\w-]{22}$/.test(key) ? key : handles[key];
+    const lookup = (key, videoId) => {
+      let id = null;
+      if (key) id = /^UC[\w-]{22}$/.test(key) ? key : handles[key];
+      // Cards with no channel link resolve through the video we already scored.
+      if (!id && videoId && videos[videoId]) id = videos[videoId].channelId;
       return id ? (map[id] || null) : null;
     };
 
