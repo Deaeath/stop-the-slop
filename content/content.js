@@ -125,17 +125,24 @@
                   document.querySelector('#owner');
     if (!owner) return;
     const old = document.getElementById('sts-watch-badge');
-    if (old) old.remove();
 
     const verdict = ch ? STS.store.effective(ch) : rec.scored.verdict;
     const score = ch && Number.isFinite(ch.score) ? ch.score : rec.scored.total;
-    if (verdict === 'unknown') return;
+    if (verdict === 'unknown') { if (old) old.remove(); return; }
+
+    // The channel average moves as more of its videos get scanned, so the chip
+    // has to be able to change - otherwise it disagrees with the name beside it.
+    const label = LABEL[verdict] + (Number.isFinite(score) ? ' ' + score : '');
+    if (old) {
+      if (old.textContent === label && old.classList.contains('sts-' + verdict)) return;
+      old.remove();
+    }
 
     const el = document.createElement('button');
     el.className = 'sts-badge sts-' + verdict;
     el.id = 'sts-watch-badge';
     el.title = 'Stop The Slop - click for the breakdown';
-    el.textContent = LABEL[verdict] + (Number.isFinite(score) ? ' ' + score : '');
+    el.textContent = label;
     el.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -510,6 +517,13 @@
 
     for (const card of cards) paintCard(card, lookup, s);
     if (s.highlightLinks) paintLinks(lookup);
+
+    // Keep the watch-page chip in step with everything else on the page.
+    if (state.current && (location.pathname === '/watch' ||
+                          location.pathname.indexOf('/shorts/') === 0)) {
+      const cur = state.current;
+      renderWatchBadge(cur, lookup(cur.channelId || cur.handle, cur.videoId));
+    }
   }
 
   /* ------------------------------------------------- channel page + routing */
