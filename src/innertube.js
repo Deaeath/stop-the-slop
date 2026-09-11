@@ -193,6 +193,27 @@ globalThis.STS = globalThis.STS || {};
              channelName: channelName, handle: handle, description: description };
   }
 
+  /* YouTube's own uploader disclosure badge. Not a heuristic - the uploader
+     ticked "altered or synthetic content", and YouTube renders it as
+     metadataBadgeRenderer{label:"AI: Content was made with AI"}. Matched
+     narrowly so a video merely TITLED "made with AI" can't trigger it. */
+  function aiDisclosure(json) {
+    let found = false;
+    walk(json, function (n) {
+      if (found || Array.isArray(n)) return;
+      const mb = n.metadataBadgeRenderer;
+      if (mb) {
+        const label = String(mb.label || '') + ' ' + textOf(mb.accessibilityData);
+        if (/content was made with ai/i.test(label)) { found = true; return; }
+      }
+      const c = n.content;
+      if (typeof c === 'string' && /^made with ai$/i.test(c.trim())) { found = true; return; }
+      const l = n.label;
+      if (typeof l === 'string' && /content was made with ai/i.test(l)) found = true;
+    });
+    return found;
+  }
+
   /** Exact metadata from the /player endpoint. The most stable source there is. */
   function playerMeta(json) {
     const d = (json && json.videoDetails) || null;
@@ -237,6 +258,7 @@ globalThis.STS = globalThis.STS || {};
       handle: (exact && exact.handle) || fallback.handle
     };
     const ep = entryPointCount(first);
+    const disclosedAi = aiDisclosure(first);
 
     let commentCount = ep.count;
     let commentsDisabled = ep.disabled;
@@ -280,7 +302,8 @@ globalThis.STS = globalThis.STS || {};
       handle: meta.handle,
       commentCount: commentsDisabled ? 0 : commentCount,
       commentsDisabled: commentsDisabled,
-      comments: comments
+      comments: comments,
+      disclosedAi: disclosedAi
     };
   }
 
@@ -317,6 +340,7 @@ globalThis.STS = globalThis.STS || {};
   STS.tube = {
     inspectVideo: inspectVideo,
     playerMeta: playerMeta,
+    aiDisclosure: aiDisclosure,
     channelVideos: channelVideos,
     parseCount: parseCount,
     textOf: textOf,

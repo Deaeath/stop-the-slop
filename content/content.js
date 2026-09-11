@@ -39,6 +39,7 @@
       views: raw.views,
       commentCount: raw.commentCount,
       commentsDisabled: raw.commentsDisabled,
+      disclosedAi: raw.disclosedAi,
       title: raw.title,
       channelId: raw.channelId,
       channelName: raw.channelName,
@@ -197,6 +198,7 @@
 
     const bars = document.createElement('div');
     bars.className = 'sts-bars';
+    if (sc.disclosedAi) bars.appendChild(bar('Labelled "Made with AI" by YouTube', sc.disclosurePoints));
     bars.appendChild(bar('Dead comment section', sc.ratioPoints));
     bars.appendChild(bar('Commenters calling it AI', sc.commentPoints));
     p.appendChild(bars);

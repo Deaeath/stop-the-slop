@@ -17,7 +17,8 @@ globalThis.STS = globalThis.STS || {};
     deficitClean: 2,     // up to 2x below expectation is normal -> 0 points
     deficitSlop: 20,     // 20x below expectation -> 100 points
     commentSample: 40,   // how many comments to read per video
-    reinforce: 0.3,      // how much the weaker signal adds to the stronger one
+    reinforce: 0.3,      // how much the next signal adds to the strongest one
+    disclosureScore: 90, // YouTube's own "Made with AI" label on the video
     disabledScore: 60,   // comments turned off entirely (suspect, not damning on its own)
     topicGuard: 0.3,     // multiplier when the video is *about* AI
     scanDepth: 6,        // videos per channel scan
@@ -150,18 +151,24 @@ globalThis.STS = globalThis.STS || {};
     // Most people watching slop never comment to say so. So the stronger signal
     // sets the score and the weaker one reinforces it, rather than averaging the
     // two and letting a quiet comment section wash out a damning ratio.
-    const present = [rPts, cm.points].filter((v) => v != null);
+    let disclosed = null;
+    if (data.disclosedAi) {
+      disclosed = s.disclosureScore;
+      notes.push('YouTube labels this "Made with AI" - the uploader declared it.');
+    }
+
+    const present = [rPts, cm.points, disclosed].filter((v) => v != null);
 
     // Don't declare anything - clean OR slop - on near-zero evidence.
     const enoughEvidence = rPts != null || cm.sampled >= 8;
 
     let total = null;
-    if (present.length && enoughEvidence) {
-      const strongest = Math.max.apply(null, present);
-      const weakest = present.length > 1 ? Math.min.apply(null, present) : 0;
-      total = Math.round(clamp(strongest + s.reinforce * weakest, 0, 100));
-      if (present.length > 1 && strongest >= 50 && weakest >= 30) {
-        notes.push('Both signals agree - dead comment section AND people calling it AI.');
+    if (present.length && (enoughEvidence || disclosed != null)) {
+      const ranked = present.slice().sort((a, b) => b - a);
+      const second = ranked.length > 1 ? ranked[1] : 0;
+      total = Math.round(clamp(ranked[0] + s.reinforce * second, 0, 100));
+      if (ranked.length > 1 && ranked[0] >= 50 && second >= 30) {
+        notes.push('Signals agree with each other.');
       }
     }
 
@@ -170,6 +177,8 @@ globalThis.STS = globalThis.STS || {};
       verdict: verdictFor(total, s),
       ratioPoints: rPts,
       commentPoints: cm.points,
+      disclosedAi: !!data.disclosedAi,
+      disclosurePoints: disclosed,
       strong: cm.strong,
       weak: cm.weak,
       sampled: (data.comments || []).length,

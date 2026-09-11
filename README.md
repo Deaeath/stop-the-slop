@@ -8,7 +8,16 @@ Shinigami Eyes style — plus a badge on every thumbnail.
 
 ## The rule it implements
 
-Two signals, scored 0-100 each:
+Three signals, scored 0-100 each. The strongest one sets the score.
+
+**0. YouTube's own "Made with AI" label.** Not a heuristic - the uploader ticked
+"altered or synthetic content" when publishing, and YouTube renders it as a badge
+on the video. It's in the `next` payload as
+`metadataBadgeRenderer{label:"AI: Content was made with AI"}`, so it works for
+any video id, not just the one on screen. Scores 90 on its own, which lands in
+SLOP once anything else corroborates. Matched narrowly, so a video merely
+*titled* "made with AI" won't trigger it.
+
 
 **1. A comment section that's dead *for a channel that size*.**
 
@@ -51,8 +60,8 @@ Run against known slop and known-human controls:
 
 | | ratio | score | verdict |
 | --- | ---: | ---: | --- |
-| Lore & Disorder | 0.038% | 100 | SLOP |
-| CANON FODDER | 0.052% | 98 | SLOP |
+| Lore & Disorder | 0.038% + AI label | 100 | SLOP |
+| CANON FODDER | 0.052% + AI label | 100 | SLOP |
 | Codex Heresy | 0.092% | 45 | SUSPECT |
 | Veritasium (x2) | 0.128% / 0.067% | 0 | CLEAR |
 | MKBHD (x2) | 0.171% / 0.096% | 0 | CLEAR |
