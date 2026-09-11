@@ -188,7 +188,10 @@ globalThis.STS = globalThis.STS || {};
     const scored = (videos || []).filter((v) => v && Number.isFinite(v.total));
     if (!scored.length) return { total: null, verdict: 'unknown', n: 0, evidence: [] };
 
-    const total = Math.round(scored.reduce((a, v) => a + v.total, 0) / scored.length);
+    // The worst video, not the mean. Averaging let a channel with one blatant
+    // 98 read as "suspect" because its other uploads were quieter - which is
+    // exactly backwards: a channel that ships slop is a slop channel.
+    const total = Math.max.apply(null, scored.map((v) => v.total));
     const evidence = [];
     for (const v of scored) {
       for (const e of v.evidence || []) {

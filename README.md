@@ -118,8 +118,10 @@ The detector is a heuristic. Where it's wrong:
 | **Shorts** | Skipped entirely | Massive views, few comments. Not auto-scanned and never folded into a channel average. Opt in under Options. |
 | **Brand-new videos** | Unknown | Comments lag views in the first hours. Under 1,200 views nothing is scored at all. |
 
-Feed verdicts come from **one** video, so they're provisional. `Scan channel`
-samples six uploads and averages, which is what you want before trusting a call.
+Every badge is that **video's** own score. A channel's verdict is its **worst**
+video seen, not its average - averaging let a channel with a blatant 98 read as
+"suspect" because its other uploads were quieter, which is exactly backwards.
+`Scan channel` samples six uploads to find the worst.
 
 ## Keeping it up to date
 

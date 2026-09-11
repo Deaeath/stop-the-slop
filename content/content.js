@@ -126,8 +126,11 @@
     if (!owner) return;
     const old = document.getElementById('sts-watch-badge');
 
-    const verdict = ch ? STS.store.effective(ch) : rec.scored.verdict;
-    const score = ch && Number.isFinite(ch.score) ? ch.score : rec.scored.total;
+    // Per video: this video's own score, not the channel average. A manual
+    // mark on the channel still overrides everything.
+    const manual = ch && ch.manual;
+    const verdict = manual ? (manual === 'slop' ? 'slop' : 'ok') : rec.scored.verdict;
+    const score = manual && Number.isFinite(ch.score) ? ch.score : rec.scored.total;
     if (verdict === 'unknown') { if (old) old.remove(); return; }
 
     // The channel average moves as more of its videos get scanned, so the chip
@@ -416,22 +419,24 @@
     decorateTimer = setTimeout(decorate, 300);
   }
 
-  function tipFor(rec, verdict) {
-    const bits = ['Stop The Slop: ' + LABEL[verdict] +
-                  (Number.isFinite(rec.score) ? ' ' + rec.score : '')];
+  function tipFor(rec, verdict, score) {
+    rec = rec || {};
+    const n = Number.isFinite(score) ? score : rec.score;
+    const bits = ['Stop The Slop: ' + LABEL[verdict] + (Number.isFinite(n) ? ' ' + n : '')];
     if (rec.name) bits.push(rec.name);
     if (rec.manual) bits.push('marked ' + rec.manual + ' by you');
     else if (rec.n) bits.push(rec.n + (rec.n === 1 ? ' video sampled' : ' videos sampled'));
     return bits.join(' - ');
   }
 
-  function paintCard(card, lookup, s) {
+  function paintCard(card, resolve, s) {
     const info = cardInfo(card);
-    const rec = lookup(info.key, info.videoId);
-    const verdict = rec ? STS.store.effective(rec) : 'unknown';
+    const r = resolve(info.key, info.videoId);
+    const rec = r.rec;
+    const verdict = r.verdict;
     const existing = card.querySelector('.sts-thumb-badge');
 
-    if (!rec || verdict === 'ok' || verdict === 'unknown') {
+    if (verdict === 'ok' || verdict === 'unknown') {
       if (existing) existing.remove();
       card.classList.remove('sts-card-slop', 'sts-card-suspect');
       return;
@@ -440,17 +445,17 @@
     // videos unreadable, which is the opposite of useful.
     card.classList.remove('sts-card-slop', 'sts-card-suspect');
     if (s.colorTitles !== false) card.classList.add('sts-card-' + verdict);
-    const text = LABEL[verdict] + (Number.isFinite(rec.score) ? ' ' + rec.score : '');
+    const text = LABEL[verdict] + (Number.isFinite(r.score) ? ' ' + r.score : '');
     if (existing) {
       existing.textContent = text;
       existing.className = 'sts-thumb-badge sts-' + verdict;
-      existing.title = tipFor(rec, verdict);
+      existing.title = tipFor(rec, verdict, r.score);
       return;
     }
     const b = document.createElement('div');
     b.className = 'sts-thumb-badge sts-' + verdict;
     b.textContent = text;
-    b.title = tipFor(rec, verdict);
+    b.title = tipFor(rec, verdict, r.score);
     const host = card.querySelector(
       'ytd-thumbnail, #thumbnail, .yt-lockup-view-model__content-image') || card;
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
@@ -515,7 +520,21 @@
       return id ? (map[id] || null) : null;
     };
 
-    for (const card of cards) paintCard(card, lookup, s);
+    // Per-video verdict, falling back to the channel when the video is unscored.
+    const resolve = (key, videoId) => {
+      const rec = lookup(key, videoId);
+      if (rec && rec.manual) {
+        return { verdict: rec.manual === 'slop' ? 'slop' : 'ok', score: rec.score, rec: rec };
+      }
+      const v = videoId ? videos[videoId] : null;
+      if (v && v.scored && Number.isFinite(v.scored.total)) {
+        return { verdict: v.scored.verdict, score: v.scored.total, rec: rec };
+      }
+      if (rec) return { verdict: STS.store.effective(rec), score: rec.score, rec: rec };
+      return { verdict: 'unknown', score: null, rec: null };
+    };
+
+    for (const card of cards) paintCard(card, resolve, s);
     if (s.highlightLinks) paintLinks(lookup);
 
     // Keep the watch-page chip in step with everything else on the page.

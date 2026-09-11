@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Stop The Slop",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Flags AI-slop YouTube channels as you browse: dead comment sections plus commenters calling it AI, highlighted right in the feed.",
   "permissions": [
     "storage",
