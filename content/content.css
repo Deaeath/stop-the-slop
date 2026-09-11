@@ -64,7 +64,6 @@ html:not([dark]) .sts-badge.sts-ok      { color: #15653f; }
   font: 600 10px/1 "Roboto", system-ui, sans-serif;
   letter-spacing: .04em;
   pointer-events: none;
-  backdrop-filter: blur(6px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, .45);
 }
 .sts-thumb-badge::before {

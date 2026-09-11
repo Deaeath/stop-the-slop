@@ -415,10 +415,12 @@
 
   /* ------------------------------------------------------------ highlighting */
 
+  const mo = new MutationObserver(() => scheduleDecorate());
+
   let decorateTimer = null;
   function scheduleDecorate() {
     clearTimeout(decorateTimer);
-    decorateTimer = setTimeout(decorate, 300);
+    decorateTimer = setTimeout(decorate, 500);
   }
 
   function tipFor(rec, verdict, score) {
@@ -445,19 +447,29 @@
     }
     // Colour the title rather than fading the card - dimming made flagged
     // videos unreadable, which is the opposite of useful.
-    card.classList.remove('sts-card-slop', 'sts-card-suspect');
-    if (s.colorTitles !== false) card.classList.add('sts-card-' + verdict);
+    const want = s.colorTitles === false ? null : 'sts-card-' + verdict;
+    const has = card.classList.contains('sts-card-slop') ? 'sts-card-slop'
+              : card.classList.contains('sts-card-suspect') ? 'sts-card-suspect' : null;
+    if (has !== want) {
+      card.classList.remove('sts-card-slop', 'sts-card-suspect');
+      if (want) card.classList.add(want);
+    }
     const text = LABEL[verdict] + (Number.isFinite(r.score) ? ' ' + r.score : '');
+    const cls = 'sts-thumb-badge sts-' + verdict;
+    const tip = tipFor(rec, verdict, r.score);
     if (existing) {
-      existing.textContent = text;
-      existing.className = 'sts-thumb-badge sts-' + verdict;
-      existing.title = tipFor(rec, verdict, r.score);
+      // Writing unconditionally here retriggered our own MutationObserver every
+      // pass, which scheduled another pass - an endless repaint loop that pinned
+      // the main thread and starved YouTube's hover-preview timer.
+      if (existing.textContent !== text) existing.textContent = text;
+      if (existing.className !== cls) existing.className = cls;
+      if (existing.title !== tip) existing.title = tip;
       return;
     }
     const b = document.createElement('div');
-    b.className = 'sts-thumb-badge sts-' + verdict;
+    b.className = cls;
     b.textContent = text;
-    b.title = tipFor(rec, verdict, r.score);
+    b.title = tip;
     const host = card.querySelector(
       'ytd-thumbnail, #thumbnail, .yt-lockup-view-model__content-image') || card;
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
@@ -536,8 +548,16 @@
       return { verdict: 'unknown', score: null, rec: null };
     };
 
-    for (const card of cards) paintCard(card, resolve, s);
-    if (s.highlightLinks) paintLinks(lookup);
+    // Painting mutates the page; if the observer stays live it sees our own
+    // writes and schedules another pass forever.
+    mo.disconnect();
+    try {
+      for (const card of cards) paintCard(card, resolve, s);
+      if (s.highlightLinks) paintLinks(lookup);
+    } finally {
+      mo.takeRecords();
+      mo.observe(document.documentElement, { childList: true, subtree: true });
+    }
 
     // Keep the watch-page chip in step with everything else on the page.
     if (state.current && (location.pathname === '/watch' ||
@@ -653,7 +673,6 @@
     if (location.href !== lastHref) { lastHref = location.href; route(); }
   }, 800);
 
-  const mo = new MutationObserver(() => scheduleDecorate());
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
   route();
