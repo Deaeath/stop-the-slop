@@ -426,10 +426,13 @@
 
     if (!rec || verdict === 'ok' || verdict === 'unknown') {
       if (existing) existing.remove();
-      card.classList.remove('sts-dim');
+      card.classList.remove('sts-card-slop', 'sts-card-suspect');
       return;
     }
-    card.classList.toggle('sts-dim', !!s.dimThumbnails && verdict === 'slop');
+    // Colour the title rather than fading the card - dimming made flagged
+    // videos unreadable, which is the opposite of useful.
+    card.classList.remove('sts-card-slop', 'sts-card-suspect');
+    if (s.colorTitles !== false) card.classList.add('sts-card-' + verdict);
     const text = LABEL[verdict] + (Number.isFinite(rec.score) ? ' ' + rec.score : '');
     if (existing) {
       existing.textContent = text;

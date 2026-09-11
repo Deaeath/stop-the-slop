@@ -26,7 +26,7 @@ globalThis.STS = globalThis.STS || {};
     maxFeedScans: 60,    // per page load, so a long scroll can't hammer youtube
     scanDelayMs: 500,    // gap between feed scans
     highlightLinks: true,// paint channel links wherever they appear
-    dimThumbnails: true,
+    colorTitles: true,   // tint the title of a flagged video (never dim it)
     autoScan: true,
     autoUpdateCheck: true,  // poll GitHub releases every 6h
     extraStrong: []

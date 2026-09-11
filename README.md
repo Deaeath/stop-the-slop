@@ -70,8 +70,8 @@ corroboration, not the primary detector.
 - **Channel names get highlighted** wherever they appear — feed bylines, the
   sidebar, search results, video descriptions, comment authors. Red for slop,
   amber for suspect.
-- **Thumbnails get a corner badge** with the score, and slop channels fade to 35%
-  opacity (hover to restore).
+- **Thumbnails get a corner badge** with the score, and flagged titles are tinted
+  red or amber. Nothing is ever dimmed or hidden - you can always read it.
 - **Watch pages** get a badge next to the channel name. Click it for the full
   breakdown: per-signal bars, plain-English notes, and quoted comments as evidence.
 - **The popup** shows the current verdict, live scan progress, `Scan channel`

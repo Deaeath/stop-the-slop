@@ -6,7 +6,7 @@
   const SLIDERS = ['slopAt', 'suspectAt', 'minViews', 'deficitClean', 'deficitSlop',
                    'baseRatio', 'disabledScore', 'commentSample', 'topicGuard',
                    'scanDepth', 'maxFeedScans', 'scanDelayMs'];
-  const CHECKS = ['autoScan', 'dimThumbnails', 'scanFeed', 'highlightLinks',
+  const CHECKS = ['autoScan', 'colorTitles', 'scanFeed', 'highlightLinks',
                   'scanShorts', 'autoUpdateCheck'];
 
   // baseRatio is stored as a fraction but edited as "comments per 10,000 views".

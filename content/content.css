@@ -76,8 +76,19 @@ html:not([dark]) .sts-badge.sts-ok      { color: #15653f; }
 .sts-thumb-badge.sts-slop    { background: rgba(24, 6, 8, .82);  color: #ff8b90; }
 .sts-thumb-badge.sts-suspect { background: rgba(28, 20, 2, .82); color: #ffc866; }
 
-.sts-dim { opacity: .38; transition: opacity .18s ease; }
-.sts-dim:hover { opacity: 1; }
+/* Flagged videos stay fully readable - only the title takes a colour. */
+.sts-card-slop :is(#video-title, h3 a, .yt-lockup-metadata-view-model__title,
+                   [class*="lockup-metadata"][class*="title"], yt-formatted-string#video-title),
+.sts-card-slop :is(#video-title, h3 a) * {
+  color: #ff7276 !important;
+}
+.sts-card-suspect :is(#video-title, h3 a, .yt-lockup-metadata-view-model__title,
+                      [class*="lockup-metadata"][class*="title"], yt-formatted-string#video-title),
+.sts-card-suspect :is(#video-title, h3 a) * {
+  color: #f0b429 !important;
+}
+html:not([dark]) .sts-card-slop :is(#video-title, h3 a) { color: #c0182a !important; }
+html:not([dark]) .sts-card-suspect :is(#video-title, h3 a) { color: #8a5200 !important; }
 
 /* --- Shinigami Eyes style name highlighting ------------------------------- */
 
