@@ -77,10 +77,11 @@ corroboration, not the primary detector.
 - **Every video on the page gets checked.** As cards scroll into view, each new
   channel is scored in the background. Flagged ones light up without you asking.
 - **Channel names get highlighted** wherever they appear — feed bylines, the
-  sidebar, search results, video descriptions, comment authors. Red for slop,
-  amber for suspect.
+  sidebar, search results, video descriptions, comment authors. Red for slop.
+  Suspect is scored but no longer painted in the feed - it was firing on too
+  much.
 - **Thumbnails get a corner badge** with the score, and flagged titles are tinted
-  red or amber. Nothing is ever dimmed or hidden - you can always read it.
+  red. Nothing is ever dimmed or hidden - you can always read it.
 - **Watch pages** get a badge next to the channel name. Click it for the full
   breakdown: per-signal bars, plain-English notes, and quoted comments as evidence.
 - **The popup** shows the current verdict, live scan progress, `Scan channel`

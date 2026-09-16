@@ -3,6 +3,10 @@
   'use strict';
 
   const LABEL = { slop: 'SLOP', suspect: 'SUSPECT', ok: 'CLEAR', unknown: '?' };
+  /* Verdicts that get painted into the feed. "Suspect" fires on too much - lofi,
+     kids' content, anything quiet - so it stays out for now. It is still scored,
+     and the watch and channel badges still report it. */
+  const PAINTED = new Set(['slop']);
   const state = { settings: null, current: null, busy: false };
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -454,7 +458,7 @@
     const verdict = r.verdict;
     const existing = card.querySelector('.sts-thumb-badge');
 
-    if (verdict === 'ok' || verdict === 'unknown') {
+    if (!PAINTED.has(verdict)) {
       if (existing) existing.remove();
       card.classList.remove('sts-card-slop', 'sts-card-suspect');
       return;
@@ -514,7 +518,7 @@
       }
       const rec = lookup(keyFromHref(a.getAttribute('href')));
       const verdict = rec ? STS.store.effective(rec) : 'unknown';
-      const want = (verdict === 'slop' || verdict === 'suspect') ? 'sts-link-' + verdict : null;
+      const want = PAINTED.has(verdict) ? 'sts-link-' + verdict : null;
       const had = a.classList.contains('sts-link-slop') ? 'sts-link-slop'
                 : a.classList.contains('sts-link-suspect') ? 'sts-link-suspect' : null;
       if (want === had) continue;
