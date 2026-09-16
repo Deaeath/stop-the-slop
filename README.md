@@ -128,10 +128,11 @@ The detector is a heuristic. Where it's wrong:
 | **Shorts** | Skipped entirely | Massive views, few comments. Not auto-scanned and never folded into a channel average. Opt in under Options. |
 | **Brand-new videos** | Unknown | Comments lag views in the first hours. Under 1,200 views nothing is scored at all. |
 
-Every badge is that **video's** own score. A channel's verdict is its **worst**
-video seen, not its average - averaging let a channel with a blatant 98 read as
-"suspect" because its other uploads were quieter, which is exactly backwards.
-`Scan channel` samples six uploads to find the worst.
+Every badge is that **video's** own score. A channel's verdict is the **average**
+of the uploads seen, not its worst one - slop comes in channels, not in singular
+videos. Judging by the worst meant a single quiet upload condemned a whole
+catalog, and since a maximum only ever climbs, scanning more of a big channel
+could only ever make it look worse. `Scan channel` samples six uploads.
 
 ## Keeping it up to date
 

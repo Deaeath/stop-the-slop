@@ -102,11 +102,40 @@ if (chrome.notifications) {
   });
 }
 
+/* --------------------------------------------------------- re-aggregation */
+
+/* A channel's verdict is derived from the per-video scores already in storage,
+ * so when the aggregation rule changes, every stored verdict stays stale until
+ * that channel happens to be scanned again. Re-derive them all on install and
+ * on update: a pure recompute off data we hold, no network, and it stops what
+ * you see from depending on when a channel was last seen. */
+async function reaggregateChannels() {
+  const store = await get(['channels', 'settings']);
+  const channels = store.channels;
+  if (!channels) return 0;
+  const settings = Object.assign({}, STS.score.DEFAULTS, store.settings || {});
+  let changed = 0;
+  for (const rec of Object.values(channels)) {
+    if (!rec || !rec.videos) continue;
+    const agg = STS.score.aggregate(Object.values(rec.videos), settings);
+    if (agg.total === rec.score && agg.verdict === rec.verdict) continue;
+    rec.score = agg.total;
+    rec.verdict = agg.verdict;
+    rec.n = agg.n;
+    rec.worst = agg.worst;
+    rec.evidence = agg.evidence;
+    changed++;
+  }
+  if (changed) await set({ channels: channels });
+  return changed;
+}
+
 /* ------------------------------------------------------------------ wiring */
 
 chrome.runtime.onInstalled.addListener(async () => {
   const cur = await get('settings');
   if (!cur.settings) await set({ settings: STS.score.DEFAULTS });
+  await reaggregateChannels();
   chrome.alarms.create(CHECK_ALARM, { delayInMinutes: 1, periodInMinutes: 360 });
   checkForUpdate(false);
 });

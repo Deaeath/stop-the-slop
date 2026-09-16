@@ -197,10 +197,14 @@ globalThis.STS = globalThis.STS || {};
     const scored = (videos || []).filter((v) => v && Number.isFinite(v.total));
     if (!scored.length) return { total: null, verdict: 'unknown', n: 0, evidence: [] };
 
-    // The worst video, not the mean. Averaging let a channel with one blatant
-    // 98 read as "suspect" because its other uploads were quieter - which is
-    // exactly backwards: a channel that ships slop is a slop channel.
-    const total = Math.max.apply(null, scored.map((v) => v.total));
+    // The channel's average, not its worst upload. Slop comes in channels, not
+    // in singular videos. Judging by the worst let one quiet 5.5K-view VOD -
+    // three comments on it, nobody calling it AI - condemn a 73,000-video
+    // tournament archive whose other thirteen samples averaged 36; and because
+    // a maximum only ever climbs, scanning more of a big catalog could only
+    // ever make it look worse. The worst upload is still reported as `worst`.
+    const totals = scored.map((v) => v.total);
+    const total = Math.round(totals.reduce((a, b) => a + b, 0) / totals.length);
     const evidence = [];
     for (const v of scored) {
       for (const e of v.evidence || []) {
