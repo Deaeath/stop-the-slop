@@ -293,7 +293,7 @@
   ].join(',');
 
   const cardCache = new WeakMap();   // card element -> {key, videoId, isShort}
-  const observed = new WeakSet();    // cards already handed to the observer
+  const observed = new WeakMap();    // card element -> the video id it held when observed
   const pending = new Set();         // channel keys queued or in flight
   const failed = new Set();          // keys that errored - don't retry this page load
   const queue = [];
@@ -314,10 +314,30 @@
     return h ? h[1].toLowerCase() : null;
   }
 
+  /* Just the id, cheap enough to re-read on every pass - which is what lets us
+     notice that a card now holds a different video. */
+  function cardVideo(card) {
+    const v = card.querySelector('a[href*="/watch?v="], a[href^="/shorts/"]');
+    if (!v) return { videoId: null, isShort: false };
+    const href = v.getAttribute('href') || '';
+    const m = href.match(/[?&]v=([A-Za-z0-9_-]{11})/);
+    if (m) return { videoId: m[1], isShort: false };
+    const sh = href.match(/\/shorts\/([A-Za-z0-9_-]{11})/);
+    if (sh) return { videoId: sh[1], isShort: true };
+    return { videoId: null, isShort: false };
+  }
+
   /** Channel + video a feed card points at. */
   function cardInfo(card) {
+    // YouTube recycles these elements - scroll far enough and the same
+    // ytd-rich-item-renderer comes back refilled with a different video. Keyed
+    // on the element alone, the cache kept handing back the id of whatever
+    // video used to live here, so the card went on wearing the old verdict:
+    // a SLOP badge sitting on a video this extension scores CLEAR. The entry
+    // is only good while the card still points at the same video.
+    const vid = cardVideo(card);
     const hit = cardCache.get(card);
-    if (hit) return hit;
+    if (hit && hit.videoId === vid.videoId) return hit;
 
     let key = null;
     const links = card.querySelectorAll('a[href^="/@"], a[href^="/channel/"]');
@@ -327,18 +347,8 @@
     }
     if (!key) key = pageChannelKey();   // channel-page grids carry no byline
 
-    let videoId = null, isShort = false;
-    const v = card.querySelector('a[href*="/watch?v="], a[href^="/shorts/"]');
-    if (v) {
-      const href = v.getAttribute('href') || '';
-      const m = href.match(/[?&]v=([A-Za-z0-9_-]{11})/);
-      const sh = href.match(/\/shorts\/([A-Za-z0-9_-]{11})/);
-      if (m) videoId = m[1];
-      else if (sh) { videoId = sh[1]; isShort = true; }
-    }
-
-    const info = { key: key, videoId: videoId, isShort: isShort };
-    if (key || videoId) cardCache.set(card, info);
+    const info = { key: key, videoId: vid.videoId, isShort: vid.isShort };
+    if (key || vid.videoId) cardCache.set(card, info);
     return info;
   }
 
@@ -378,7 +388,7 @@
       const s = await settings();
       while (queue.length) {
         const job = queue.shift();
-        if (scansThisSession >= s.maxFeedScans) { pending.delete(job.key); continue; }
+        if (scansThisSession >= s.maxFeedScans) { pending.delete(job.tag); continue; }
         scansThisSession++;
         try {
           await scoreVideo(job.videoId, false, { isShort: job.isShort });
@@ -406,8 +416,12 @@
   function observeCards() {
     const cards = document.querySelectorAll(CARD_SEL);
     for (const card of cards) {
-      if (observed.has(card)) continue;
-      observed.add(card);
+      // io.unobserve() drops a card once it has been scanned. When YouTube
+      // refills that same element with another video, nothing would put it
+      // back on the observer, and the new video never got scored at all.
+      const id = cardInfo(card).videoId;
+      if (observed.get(card) === id) continue;
+      observed.set(card, id);
       io.observe(card);
     }
     return cards;
